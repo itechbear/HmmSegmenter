@@ -28,10 +28,10 @@ bool Tagger::Segment(const HmmModel &model,
     nodes[i] = new int[chars.size()];
   }
 
-  weights[0][0] = -0.26268660809250016;
+  weights[0][0] = model.GetEmissionProbability(chars[0], HmmModel::B);
   weights[1][0] = -3.14e+100;
   weights[2][0] = -3.14e+100;
-  weights[3][0] = -1.4652633398537678;
+  weights[3][0] = model.GetEmissionProbability(chars[0], HmmModel::S);
 
 //  weights[0][0] = model.GetEmissionProbability(chars[0], HmmModel::B);
 //  weights[1][0] = model.GetEmissionProbability(chars[0], HmmModel::B);
