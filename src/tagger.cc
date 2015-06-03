@@ -58,38 +58,48 @@ bool Tagger::Segment(const HmmModel &model,
   size_t last_pos = 0;
   if (weights[1][chars_count - 1] > weights[3][chars_count - 1]) {
     tags.push_back(HmmModel::E);
-    last_pos =  nodes[0][chars_count - 1];
+    last_pos =  nodes[1][chars_count - 1];
   } else {
     tags.push_back(HmmModel::S);
     last_pos = nodes[3][chars_count - 1];
   }
-  for (size_t i = chars_count - 2; i >= 0; --i) {
+  for (size_t i = chars_count - 2; i > 0; --i) {
     tags.push_back((HmmModel::Tag) last_pos);
     if (i == 0) {
       break;
     }
     last_pos = (HmmModel::Tag) nodes[last_pos][i];
   }
+  tags.push_back(HmmModel::B);
+  std::reverse(tags.begin(), tags.end());
 
-  for (int i = 0; i < tags.size(); ++i) {
-    std::cout << tags[i];
+//  for (int i = 0; i < tags.size(); ++i) {
+//    std::cout << tags[i];
+//  }
+//  std::cout << std::endl;
+
+  for (int i = 0; i < chars.size(); ++i) {
+    std::cout << chars[i];
+    if (tags[i] == HmmModel::E || tags[i] == HmmModel::S) {
+      std::cout << " ";
+    }
   }
   std::cout << std::endl;
 
-  for (int i = 0; i < 4; ++i) {
-    for (int j = 0; j < chars_count; ++j) {
-      std::cout << weights[i][j] << " ";
-    }
-    std::cout << std::endl;
-  }
-  std::cout << std::endl;
-
-  for (int i = 0; i < 4; ++i) {
-    for (int j = 0; j < chars_count; ++j) {
-      std::cout << nodes[i][j] << "\t";
-    }
-    std::cout << std::endl;
-  }
+//  for (int i = 0; i < 4; ++i) {
+//    for (int j = 0; j < chars_count; ++j) {
+//      std::cout << weights[i][j] << " ";
+//    }
+//    std::cout << std::endl;
+//  }
+//  std::cout << std::endl;
+//
+//  for (int i = 0; i < 4; ++i) {
+//    for (int j = 0; j < chars_count; ++j) {
+//      std::cout << nodes[i][j] << "\t";
+//    }
+//    std::cout << std::endl;
+//  }
 
   for (int i = 0; i < 4; ++i) {
     delete [] weights[i];
