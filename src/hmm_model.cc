@@ -4,6 +4,8 @@
 
 #include "inc/hmm_model.h"
 
+#include <cmath>
+
 #include <glog/logging.h>
 
 namespace hmmsegmenter {
@@ -148,6 +150,7 @@ void HmmModel::Calculate() {
         double tag_freq = tag_frequency[(HmmModel::Tag) tag];
         emission_matrix_[emit_key] = char_frequency[char_iterator->first] * cond_frequency[cond_key] / tag_frequency[(HmmModel::Tag) tag];
       }
+      emission_matrix_[emit_key] = std::log(emission_matrix_[emit_key]);
       LOG(INFO) << "emit_key: " << emit_key << ", value: " << emission_matrix_[emit_key];
     }
   }
