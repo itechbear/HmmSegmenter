@@ -45,7 +45,7 @@ double HmmModel::GetEmissionProbability(const std::string &character, HmmModel::
   const std::string key = character + ":" + std::to_string(tag);
   std::unordered_map<std::string, double>::const_iterator iterator = emission_matrix_.find(key);
   if (iterator == emission_matrix_.end()) {
-    return -3.14e+100;
+    return (tag == S) ? 0 : -3.14e+100;
   }
   return iterator->second;
 }
@@ -150,7 +150,7 @@ void HmmModel::Calculate() {
         double tag_freq = tag_frequency[(HmmModel::Tag) tag];
         emission_matrix_[emit_key] = char_frequency[char_iterator->first] * cond_frequency[cond_key] / tag_frequency[(HmmModel::Tag) tag];
       }
-      emission_matrix_[emit_key] = std::log(emission_matrix_[emit_key]);
+      emission_matrix_[emit_key] = std::log2(emission_matrix_[emit_key]);
       LOG(INFO) << "emit_key: " << emit_key << ", value: " << emission_matrix_[emit_key];
     }
   }
