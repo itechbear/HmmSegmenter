@@ -8,42 +8,61 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <map>
+#include <string>
 
 namespace hmmsegmenter {
 
 class HmmModel {
  public:
   enum Tag {
-    B, E, M, S
+    Z = -1, B, E, M, S
   };
+
+  static inline char TagToChar(const Tag tag) {
+    switch (tag) {
+      case B:
+        return 'B';
+      case E:
+        return 'E';
+      case M:
+        return 'M';
+      case S:
+        return 'S';
+      default:
+        return 'Z';
+    }
+  }
 
   HmmModel();
 
   ~HmmModel();
 
-  double GetTransferProbability(Tag first, Tag second) const;
-
-  double GetEmissionProbability(const std::string &character, Tag tag) const;
-
   void AddCharacter(const std::string &character);
 
-  void AddTag(Tag tag);
+  void AddTag(const Tag tag);
 
-  void AddCharacterCondition(Tag tag,
+  void AddCharacterCondition(const Tag tag,
                              const std::string &character);
 
-  void AddTagCondition(HmmModel::Tag prev_tag,
-                                 HmmModel::Tag current_tag);
+  void AddTagCondition(const Tag previous,
+                       const Tag current);
 
   void Calculate();
 
+  double GetTransferProbability(const Tag previous, const Tag current) const;
+
+  double GetEmissionProbability(const std::string &character, const Tag tag) const;
+
+  void Clear();
+
  private:
-  std::unordered_map<std::string, double> transfer_matrix_;
-  std::unordered_map<std::string, double> emission_matrix_;
-  std::unordered_map<std::string, uint32_t> character_conditions_;
-  std::unordered_map<std::string, uint32_t> tag_conditions_;
+  std::unordered_map<uint8_t, std::unordered_map<uint8_t, double> > transfer_matrix_;
+  std::unordered_map<std::string, std::unordered_map<uint8_t, double> > emission_matrix_;
+  std::unordered_map<uint8_t, std::unordered_map<std::string, uint32_t> > character_conditions_;
+  std::unordered_map<uint8_t, std::unordered_map<uint8_t, uint32_t>> tag_conditions_;
   std::unordered_map<std::string, uint32_t> characters_;
   std::map<Tag, uint32_t> tags_;
+  bool cleared_;
 };
 
 }  // namespace hmmsegmenter

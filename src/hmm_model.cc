@@ -14,54 +14,18 @@ HmmModel::HmmModel() : transfer_matrix_(),
                        emission_matrix_(),
                        character_conditions_(),
                        tag_conditions_(),
-                       characters_() {
-//  transfer_matrix_["0:0"] = -3.14e+100;
-//  transfer_matrix_["0:1"] = -0.510825623765990;
-//  transfer_matrix_["0:2"] = -0.916290731874155;
-//  transfer_matrix_["0:3"] = -3.14e+100;
-//
-//  transfer_matrix_["1:0"] = -0.5897149736854513;
-//  transfer_matrix_["1:1"] = -3.14e+100;
-//  transfer_matrix_["1:2"] = -3.14e+100;
-//  transfer_matrix_["1:3"] = -0.8085250474669937;
-//
-//  transfer_matrix_["2:0"] = -3.14e+100;
-//  transfer_matrix_["2:1"] = -0.33344856811948514;
-//  transfer_matrix_["2:2"] = -1.2603623820268226;
-//  transfer_matrix_["2:3"] = -3.14e+100;
-//
-//  transfer_matrix_["3:0"] = -0.7211965654669841;
-//  transfer_matrix_["3:1"] = -3.14e+100;
-//  transfer_matrix_["3:2"] = -3.14e+100;
-//  transfer_matrix_["3:3"] = -0.6658631448798212;
+                       characters_(),
+                       cleared_(false) {
 }
 
 HmmModel::~HmmModel() {
 }
 
-double HmmModel::GetTransferProbability(HmmModel::Tag first,
-                                        HmmModel::Tag second) const {
-  const std::string key = std::to_string(first) + ":" + std::to_string(second);
-  std::unordered_map<std::string, double>::const_iterator iterator = transfer_matrix_.find(key);
-  if (iterator == transfer_matrix_.end()) {
-    return -3.14e+100;
-  }
-  return iterator->second;
-}
-
-double HmmModel::GetEmissionProbability(const std::string &character, HmmModel::Tag tag) const {
-  const std::string key = character + ":" + std::to_string(tag);
-  std::unordered_map<std::string, double>::const_iterator iterator = emission_matrix_.find(key);
-  if (iterator == emission_matrix_.end()) {
-    return (tag == S) ? 0 : -3.14e+100;
-  }
-  return iterator->second;
-}
-
 void HmmModel::AddCharacter(const std::string &character) {
-  std::unordered_map<std::string, uint32_t>::iterator iterator = characters_.find(character);
+  std::unordered_map<std::string, uint32_t>::const_iterator const_iterator
+      = characters_.find(character);
 
-  if (iterator == characters_.end()) {
+  if (const_iterator == characters_.end()) {
     characters_[character] = 1;
     return;
   }
@@ -70,9 +34,9 @@ void HmmModel::AddCharacter(const std::string &character) {
 }
 
 void HmmModel::AddTag(Tag tag) {
-  std::map<Tag, uint32_t>::iterator iterator = tags_.find(tag);
+  std::map<Tag, uint32_t>::iterator const_iterator = tags_.find(tag);
 
-  if (iterator == tags_.end()) {
+  if (const_iterator == tags_.end()) {
     tags_[tag] = 1;
     return;
   }
@@ -80,30 +44,34 @@ void HmmModel::AddTag(Tag tag) {
   ++tags_[tag];
 }
 
-void HmmModel::AddCharacterCondition(HmmModel::Tag tag,
+void HmmModel::AddCharacterCondition(const Tag tag,
                                      const std::string &character) {
-  const std::string key = std::to_string(tag) + ":" + character;
-  std::unordered_map<std::string, uint32_t>::iterator iterator = character_conditions_.find(key);
-
-  if (iterator == character_conditions_.end()) {
-    character_conditions_[key] = 1;
+  std::unordered_map<uint8_t, std::unordered_map<std::string, uint32_t> >::const_iterator outer_iterator = character_conditions_.find(tag);
+  if (outer_iterator == character_conditions_.end()) {
+    character_conditions_[tag][character] = 1;
     return;
   }
-
-  ++character_conditions_[key];
+  std::unordered_map<std::string, uint32_t>::const_iterator inner_iterator = outer_iterator->second.find(character);
+  if (inner_iterator == outer_iterator->second.end()) {
+    character_conditions_[tag][character] = 1;
+    return;
+  }
+  ++character_conditions_[tag][character];
 }
 
-void HmmModel::AddTagCondition(HmmModel::Tag prev_tag,
-                               HmmModel::Tag current_tag) {
-  const std::string key  = std::to_string(prev_tag) + ":" + std::to_string(current_tag);
-  std::unordered_map<std::string, uint32_t>::const_iterator iterator = tag_conditions_.find(key);
-
-  if (iterator == tag_conditions_.end()) {
-    tag_conditions_[key] = 1;
+void HmmModel::AddTagCondition(const Tag previous,
+                               const Tag current) {
+  std::unordered_map<uint8_t, std::unordered_map<uint8_t, uint32_t> >::const_iterator outer_iterator = tag_conditions_.find(previous);
+  if (outer_iterator == tag_conditions_.end()) {
+    tag_conditions_[previous][current] = 1;
     return;
   }
-
-  ++tag_conditions_[key];
+  std::unordered_map<uint8_t, uint32_t>::const_iterator inner_iterator = outer_iterator->second.find(current);
+  if (inner_iterator == outer_iterator->second.end()) {
+    tag_conditions_[previous][current] = 1;
+    return;
+  }
+  ++tag_conditions_[previous][current];
 }
 
 void HmmModel::Calculate() {
@@ -117,24 +85,28 @@ void HmmModel::Calculate() {
   }
 
   uint64_t characters_count = 0;
-  for (std::unordered_map<std::string, uint32_t>::const_iterator iterator = characters_.begin();
-       iterator != characters_.end();
-       ++iterator) {
-    characters_count += iterator->second;
+  for (std::unordered_map<std::string, uint32_t>::const_iterator const_iterator = characters_.begin();
+       const_iterator != characters_.end();
+       ++const_iterator) {
+    characters_count += const_iterator->second;
   }
 
   uint64_t character_condition_count = 0;
-  for (std::unordered_map<std::string, uint32_t>::const_iterator iterator = character_conditions_.begin();
-       iterator != character_conditions_.end();
-       ++iterator) {
-    character_condition_count += iterator->second;
+  for (std::unordered_map<uint8_t, std::unordered_map<std::string, uint32_t> >::const_iterator outer_iterator = character_conditions_.begin();
+       outer_iterator != character_conditions_.end();
+       ++outer_iterator) {
+    for (std::unordered_map<std::string, uint32_t>::const_iterator inner_iterator = outer_iterator->second.begin(); inner_iterator != outer_iterator->second.end(); ++inner_iterator) {
+      character_condition_count += inner_iterator->second;
+    }
   }
 
   uint64_t tag_condition_count = 0;
-  for (std::unordered_map<std::string, uint32_t>::const_iterator iterator = tag_conditions_.begin();
-       iterator != tag_conditions_.end();
-       ++iterator) {
-    tag_condition_count += iterator->second;
+  for (std::unordered_map<uint8_t, std::unordered_map<uint8_t, uint32_t>>::const_iterator outer_iterator = tag_conditions_.begin();
+       outer_iterator != tag_conditions_.end();
+       ++outer_iterator) {
+    for (std::unordered_map<uint8_t, uint32_t>::const_iterator inner_iterator = outer_iterator->second.begin(); inner_iterator != outer_iterator->second.end(); ++inner_iterator) {
+      tag_condition_count += inner_iterator->second;
+    }
   }
 
   std::map<Tag, double> tag_frequency;
@@ -144,46 +116,78 @@ void HmmModel::Calculate() {
     tag_frequency[const_iterator->first] = tags_[const_iterator->first] / (double) tags_count;
   }
 
-  std::map<std::string, double> char_frequency;
+  std::map<std::string, double> character_frequency;
   for (std::unordered_map<std::string, uint32_t>::const_iterator const_iterator = characters_.begin();
        const_iterator != characters_.end();
        ++const_iterator) {
-    char_frequency[const_iterator->first] = characters_[const_iterator->first] / (double) characters_count;
+    character_frequency[const_iterator->first] = characters_[const_iterator->first] / (double) characters_count;
   }
 
-  std::map<std::string, double> cond_frequency;
-  for (std::unordered_map<std::string, uint32_t>::const_iterator const_iterator = character_conditions_.begin();
-       const_iterator != character_conditions_.end();
-       ++const_iterator) {
-    cond_frequency[const_iterator->first] = character_conditions_[const_iterator->first] / (double) character_condition_count;
-  }
-
-  for (std::unordered_map<std::string, uint32_t>::const_iterator char_iterator = characters_.begin();
-       char_iterator != characters_.end();
-       ++char_iterator) {
-    for (uint8_t tag = B; tag <= S; ++tag) {
-      const std::string cond_key = std::to_string(tag) + ":" + char_iterator->first;
-      const std::string emit_key = char_iterator->first + ":" + std::to_string(tag);
-      if (cond_frequency.find(cond_key) == cond_frequency.end()) {
-        emission_matrix_[emit_key] = -3.14e+100;
-      } else {
-        double char_freq = char_frequency[char_iterator->first];
-        double cond_freq = cond_frequency[cond_key];
-        double tag_freq = tag_frequency[(HmmModel::Tag) tag];
-        emission_matrix_[emit_key] = char_frequency[char_iterator->first] * cond_frequency[cond_key] / tag_frequency[(HmmModel::Tag) tag];
-      }
-      emission_matrix_[emit_key] = std::log2(emission_matrix_[emit_key]);
+  std::unordered_map<uint8_t, std::unordered_map<std::string, double>> character_condition_frequency;
+  for (std::unordered_map<uint8_t, std::unordered_map<std::string, uint32_t>>::const_iterator outer_iterator = character_conditions_.begin();
+       outer_iterator != character_conditions_.end();
+       ++outer_iterator) {
+    for (std::unordered_map<std::string, uint32_t>::const_iterator inner_iterator = outer_iterator->second.begin(); inner_iterator != outer_iterator->second.end(); ++inner_iterator) {
+      character_condition_frequency[outer_iterator->first][inner_iterator->first] = inner_iterator->second / (double) character_condition_count;
     }
   }
 
-  for (int i = B; i <= S; ++i) {
-    for (int j = B; j <= S; ++j) {
-      const std::string key = std::to_string(i) + ":" + std::to_string(j);
-      transfer_matrix_[key] = tag_conditions_[key] / (double) tag_condition_count;
+  for (std::unordered_map<std::string, uint32_t>::const_iterator character_iterator = characters_.begin();
+       character_iterator != characters_.end();
+       ++character_iterator) {
+    for (uint8_t tag = B; tag <= S; ++tag) {
+      if (character_condition_frequency.find(tag) == character_condition_frequency.end() || character_condition_frequency[tag].find(character_iterator->first) == character_condition_frequency[tag].end()) {
+        emission_matrix_[character_iterator->first][tag] = -3.14e+100;
+      } else {
+        emission_matrix_[character_iterator->first][tag] = character_frequency[character_iterator->first] * character_condition_frequency[tag][character_iterator->first] / tag_frequency[(Tag) tag];
+        emission_matrix_[character_iterator->first][tag] = std::log2(emission_matrix_[character_iterator->first][tag]);
+      }
+    }
+  }
+
+  for (uint8_t previous = B; previous <= S; ++previous) {
+    for (uint8_t current = B; current <= S; ++current) {
+      if (tag_conditions_.find(previous) != tag_conditions_.end() && tag_conditions_[previous].find(current) != tag_conditions_[previous].end()) {
+        transfer_matrix_[previous][current] = std::log2(tag_conditions_[previous][current] / (double) tag_condition_count);
+      }
     }
   }
 
   LOG(INFO) << "Calculation finishes.";
+}
+
+double HmmModel::GetTransferProbability(const Tag previous,
+                                        const Tag current) const {
+  std::unordered_map<uint8_t, std::unordered_map<uint8_t, double> >::const_iterator outer_iterator = transfer_matrix_.find(previous);
+  if (outer_iterator == transfer_matrix_.end()) {
+    return -3.14e+100;
+  }
+  std::unordered_map<uint8_t, double>::const_iterator inner_iterator = outer_iterator->second.find(current);
+  if (inner_iterator == outer_iterator->second.end()) {
+    return -3.14e+100;
+  }
+  return inner_iterator->second;
+}
+
+double HmmModel::GetEmissionProbability(const std::string &character,
+                                        const Tag tag) const {
+  std::unordered_map<std::string, std::unordered_map<uint8_t, double> >::const_iterator outer_iterator = emission_matrix_.find(character);
+  if (outer_iterator == emission_matrix_.end()) {
+    return (tag == S) ? 0 : -3.14e+100;
+  }
+  std::unordered_map<uint8_t, double>::const_iterator inner_iterator = outer_iterator->second.find(tag);
+  if (inner_iterator == outer_iterator->second.end()) {
+    return (tag == S) ? 0 : -3.14e+100;
+  }
+  return inner_iterator->second;
+}
+
+void HmmModel::Clear() {
+  character_conditions_.clear();
+  tag_conditions_.clear();
+  characters_.clear();
+  tags_.clear();
+  cleared_ = true;
 }
 
 }  // namespace hmmsegmenter

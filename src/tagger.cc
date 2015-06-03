@@ -19,19 +19,19 @@ bool Tagger::Segment(const HmmModel &model,
   utf.GetUtf8Strings(&chars);
 
   const size_t chars_count = chars.size();
-  double *weights[4];
+  double *probabilities[4];
   for (int i = 0; i < 4; ++i) {
-    weights[i] = new double[chars.size()];
+    probabilities[i] = new double[chars_count];
   }
   int *nodes[4];
   for (int i = 0; i < 4; ++i) {
-    nodes[i] = new int[chars.size()];
+    nodes[i] = new int[chars_count];
   }
 
-  weights[0][0] = model.GetEmissionProbability(chars[0], HmmModel::B);
-  weights[1][0] = -3.14e+100;
-  weights[2][0] = -3.14e+100;
-  weights[3][0] = model.GetEmissionProbability(chars[0], HmmModel::S);
+  probabilities[0][0] = model.GetEmissionProbability(chars[0], HmmModel::B);
+  probabilities[1][0] = -3.14e+100;
+  probabilities[2][0] = -3.14e+100;
+  probabilities[3][0] = model.GetEmissionProbability(chars[0], HmmModel::S);
 
   nodes[0][0] = HmmModel::B;
   nodes[1][0] = HmmModel::E;
@@ -39,15 +39,16 @@ bool Tagger::Segment(const HmmModel &model,
   nodes[3][0] = HmmModel::S;
 
   for (int i = 1; i < chars_count; ++i) {
-    for (int j = 0; j < 4; ++j) {
-      HmmModel::Tag cur_tag = (HmmModel::Tag) j;
-      weights[j][i] = -3.14e+100;
+    for (uint8_t j = HmmModel::B; j <= HmmModel::S; ++j) {
+      probabilities[j][i] = -3.14e+100;
       nodes[j][i] = HmmModel::E;
       for (int k = 0; k < 4; ++k) {
         HmmModel::Tag prev_tag = (HmmModel::Tag) k;
-        double transfer_from_k = weights[k][i - 1] + model.GetTransferProbability(prev_tag, cur_tag) + model.GetEmissionProbability(chars[i], cur_tag);
-        if (transfer_from_k > weights[j][i]) {
-          weights[j][i] = transfer_from_k;
+        double transfer_from_k = probabilities[k][i - 1]
+                                 + model.GetTransferProbability(prev_tag, (HmmModel::Tag) j)
+                                 + model.GetEmissionProbability(chars[i], (HmmModel::Tag) j);
+        if (transfer_from_k > probabilities[j][i]) {
+          probabilities[j][i] = transfer_from_k;
           nodes[j][i] = k;
         }
       }
@@ -56,7 +57,7 @@ bool Tagger::Segment(const HmmModel &model,
 
   std::vector<HmmModel::Tag> tags;
   int last_pos = 0;
-  if (weights[1][chars_count - 1] > weights[3][chars_count - 1]) {
+  if (probabilities[1][chars_count - 1] > probabilities[3][chars_count - 1]) {
     tags.push_back(HmmModel::E);
     last_pos =  nodes[1][chars_count - 1];
   } else {
@@ -72,7 +73,7 @@ bool Tagger::Segment(const HmmModel &model,
   }
   std::reverse(tags.begin(), tags.end());
 
-  for (int i = 0; i < chars.size(); ++i) {
+  for (int i = 0; i < chars_count; ++i) {
     std::cout << chars[i];
     if (tags[i] == HmmModel::E || tags[i] == HmmModel::S) {
       std::cout << " ";
@@ -80,8 +81,24 @@ bool Tagger::Segment(const HmmModel &model,
   }
   std::cout << std::endl;
 
+  //for (int i = 0; i < 4; ++i) {
+  //  for (int j = 0; j < chars_count; ++j) {
+  //    std::cout << probabilities[i][j] << "\t";
+  //  }
+  //  std::cout << std::endl;
+  //}
+  //std::cout << std::endl;
+  //
+  //for (int i = 0; i < 4; ++i) {
+  //  for (int j = 0; j < chars_count; ++j) {
+  //    std::cout << nodes[i][j] << "\t";
+  //  }
+  //  std::cout << std::endl;
+  //}
+  //std::cout << std::endl;
+
   for (int i = 0; i < 4; ++i) {
-    delete [] weights[i];
+    delete [] probabilities[i];
     delete [] nodes[i];
   }
 
