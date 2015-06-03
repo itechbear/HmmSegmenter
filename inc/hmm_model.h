@@ -29,14 +29,19 @@ class HmmModel {
 
   void AddTag(Tag tag);
 
-  void AddCondition(Tag tag, const std::string &character);
+  void AddCharacterCondition(Tag tag,
+                             const std::string &character);
+
+  void AddTagCondition(HmmModel::Tag prev_tag,
+                                 HmmModel::Tag current_tag);
 
   void Calculate();
 
  private:
   std::unordered_map<std::string, double> transfer_matrix_;
   std::unordered_map<std::string, double> emission_matrix_;
-  std::unordered_map<std::string, uint32_t> conditions_;
+  std::unordered_map<std::string, uint32_t> character_conditions_;
+  std::unordered_map<std::string, uint32_t> tag_conditions_;
   std::unordered_map<std::string, uint32_t> characters_;
   std::map<Tag, uint32_t> tags_;
 };

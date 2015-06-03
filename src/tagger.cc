@@ -33,12 +33,6 @@ bool Tagger::Segment(const HmmModel &model,
   weights[2][0] = -3.14e+100;
   weights[3][0] = model.GetEmissionProbability(chars[0], HmmModel::S);
 
-//  weights[0][0] = model.GetEmissionProbability(chars[0], HmmModel::B);
-//  weights[1][0] = model.GetEmissionProbability(chars[0], HmmModel::B);
-//  weights[2][0] = model.GetEmissionProbability(chars[0], HmmModel::B);
-//  weights[3][0] = model.GetEmissionProbability(chars[0], HmmModel::B);
-
-
   nodes[0][0] = HmmModel::B;
   nodes[1][0] = HmmModel::E;
   nodes[2][0] = HmmModel::M;
@@ -61,7 +55,7 @@ bool Tagger::Segment(const HmmModel &model,
   }
 
   std::vector<HmmModel::Tag> tags;
-  size_t last_pos = 0;
+  int last_pos = 0;
   if (weights[1][chars_count - 1] > weights[3][chars_count - 1]) {
     tags.push_back(HmmModel::E);
     last_pos =  nodes[1][chars_count - 1];
@@ -78,11 +72,6 @@ bool Tagger::Segment(const HmmModel &model,
   }
   std::reverse(tags.begin(), tags.end());
 
-//  for (int i = 0; i < tags.size(); ++i) {
-//    std::cout << tags[i];
-//  }
-//  std::cout << std::endl;
-
   for (int i = 0; i < chars.size(); ++i) {
     std::cout << chars[i];
     if (tags[i] == HmmModel::E || tags[i] == HmmModel::S) {
@@ -90,21 +79,6 @@ bool Tagger::Segment(const HmmModel &model,
     }
   }
   std::cout << std::endl;
-
-//  for (int i = 0; i < 4; ++i) {
-//    for (int j = 0; j < chars_count; ++j) {
-//      std::cout << weights[i][j] << " ";
-//    }
-//    std::cout << std::endl;
-//  }
-//  std::cout << std::endl;
-//
-//  for (int i = 0; i < 4; ++i) {
-//    for (int j = 0; j < chars_count; ++j) {
-//      std::cout << nodes[i][j] << "\t";
-//    }
-//    std::cout << std::endl;
-//  }
 
   for (int i = 0; i < 4; ++i) {
     delete [] weights[i];

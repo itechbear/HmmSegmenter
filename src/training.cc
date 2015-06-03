@@ -27,6 +27,7 @@ bool Training::Train() {
   }
 
   std::string line;
+  int last_tag = -1;
   while (file_reader_.ReadLine(&line)) {
     std::vector<std::string> tokens;
     StringUtil::Tokenize(line, " \t", &tokens);
@@ -37,23 +38,32 @@ bool Training::Train() {
       utf8.GetUtf8Strings(&characters);
       const size_t size = characters.size();
       if (size == 1) {
-        hmm_model_.AddTag(HmmModel::S);
+        HmmModel::Tag current_tag = HmmModel::S;
+        hmm_model_.AddTag(current_tag);
         hmm_model_.AddCharacter(characters[0]);
-        hmm_model_.AddCondition(HmmModel::S, characters[0]);
+        hmm_model_.AddCharacterCondition(HmmModel::S, characters[0]);
+        if (last_tag != -1) {
+          hmm_model_.AddTagCondition((HmmModel::Tag) last_tag, current_tag);
+        }
+        last_tag = current_tag;
       } else {
         const size_t count = characters.size();
         for (size_t i = 0; i < count; ++i) {
-          HmmModel::Tag tag;
+          HmmModel::Tag current_tag;
           if (i == 0) {
-            tag = HmmModel::B;
+            current_tag = HmmModel::B;
           } else if (i == count - 1) {
-            tag = HmmModel::E;
+            current_tag = HmmModel::E;
           } else {
-            tag = HmmModel::M;
+            current_tag = HmmModel::M;
           }
-          hmm_model_.AddTag(tag);
+          hmm_model_.AddTag(current_tag);
           hmm_model_.AddCharacter(characters[i]);
-          hmm_model_.AddCondition(tag, characters[i]);
+          hmm_model_.AddCharacterCondition(current_tag, characters[i]);
+          if (last_tag != -1) {
+            hmm_model_.AddTagCondition((HmmModel::Tag) last_tag, current_tag);
+          }
+          last_tag = current_tag;
         }
       }
     }
