@@ -34,8 +34,7 @@ bool Training::Train() {
     for (size_t i = 0; i < tokens.size(); ++i) {
       const std::string token = tokens[i];
       std::vector<std::string> characters;
-      Utf8 utf8(token);
-      utf8.GetUtf8Strings(&characters);
+      Utf8::GetUtf8Strings(token, &characters);
       const size_t size = characters.size();
       if (size == 1) {
         HmmModel::Tag current_tag = HmmModel::S;

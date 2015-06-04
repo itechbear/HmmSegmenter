@@ -6,13 +6,6 @@
 
 namespace hmmsegmenter {
 
-Utf8::Utf8(const std::string &ascii)
-    : ascii_(ascii) {
-}
-
-Utf8::~Utf8() {
-}
-
 uint8_t Utf8::GetByteCount(uint8_t byte) {
   if (byte < 0b10000000) {
     return 1;
@@ -29,15 +22,16 @@ uint8_t Utf8::GetByteCount(uint8_t byte) {
   return 4;
 }
 
-bool Utf8::GetUtf8Strings(std::vector<std::string> *chars) {
-  size_t length = ascii_.length();
+bool Utf8::GetUtf8Strings(const std::string &text,
+                          std::vector<std::string> *chars) {
+  size_t length = text.length();
 
   for (size_t i = 0; i < length;) {
-    uint8_t count = GetByteCount(ascii_[i]);
+    uint8_t count = GetByteCount(text[i]);
     if (i + count > length) {
       return false;
     }
-    chars->push_back(ascii_.substr(i, count));
+    chars->push_back(text.substr(i, count));
     i += count;
   }
 

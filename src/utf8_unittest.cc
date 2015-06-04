@@ -19,27 +19,24 @@ TEST(Utf8, GetByteCount) {
 
 TEST(Utf8, GetUtf8Strings) {
   {
-    hmmsegmenter::Utf8 utf8("ab");
     std::vector<std::string> chars;
-    utf8.GetUtf8Strings(&chars);
+    hmmsegmenter::Utf8::GetUtf8Strings("ab", &chars);
     ASSERT_EQ(2, chars.size());
     ASSERT_EQ("a", chars[0]);
     ASSERT_EQ("b", chars[1]);
   }
 
   {
-    hmmsegmenter::Utf8 utf8("人们");
     std::vector<std::string> chars;
-    utf8.GetUtf8Strings(&chars);
+    hmmsegmenter::Utf8::GetUtf8Strings("人们", &chars);
     ASSERT_EQ(2, chars.size());
     ASSERT_EQ("人", chars[0]);
     ASSERT_EQ("们", chars[1]);
   }
 
   {
-    hmmsegmenter::Utf8 utf8(" 人们\t#");
     std::vector<std::string> chars;
-    utf8.GetUtf8Strings(&chars);
+    hmmsegmenter::Utf8::GetUtf8Strings(" 人们\t#", &chars);
     ASSERT_EQ(5, chars.size());
     ASSERT_EQ(" ", chars[0]);
     ASSERT_EQ("人", chars[1]);

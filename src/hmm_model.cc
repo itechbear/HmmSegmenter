@@ -7,6 +7,7 @@
 #include <cmath>
 
 #include <glog/logging.h>
+#include <limits>
 
 namespace hmmsegmenter {
 
@@ -112,9 +113,10 @@ void HmmModel::Calculate() {
     }
   }
 
-  std::map<Tag, double> tag_frequency;
-  for (auto const_iterator = tags_.begin(); const_iterator != tags_.end(); ++const_iterator) {
-    tag_frequency[const_iterator->first] = tags_[const_iterator->first] / (double) tags_count;
+  for (auto const_iterator = tags_.begin();
+       const_iterator != tags_.end();
+       ++const_iterator) {
+    tag_frequency_[const_iterator->first] = tags_[const_iterator->first] / (double) tags_count;
   }
 
   std::map<std::string, double> character_frequency;
@@ -143,7 +145,7 @@ void HmmModel::Calculate() {
           || character_condition_frequency[tag].find(character_iterator->first) == character_condition_frequency[tag].end()) {
         emission_matrix_[character_iterator->first][tag] = -19.9315685693;
       } else {
-        emission_matrix_[character_iterator->first][tag] = character_frequency[character_iterator->first] * character_condition_frequency[tag][character_iterator->first] / tag_frequency[(Tag) tag];
+        emission_matrix_[character_iterator->first][tag] = character_frequency[character_iterator->first] * character_condition_frequency[tag][character_iterator->first] / tag_frequency_[(Tag) tag];
         emission_matrix_[character_iterator->first][tag] = std::log2(emission_matrix_[character_iterator->first][tag]);
       }
     }
@@ -193,6 +195,16 @@ void HmmModel::Clear() {
   characters_.clear();
   tags_.clear();
   cleared_ = true;
+}
+
+double HmmModel::GetTagFrequency(const HmmModel::Tag tag) const {
+  auto const_iterator = tag_frequency_.find(tag);
+
+  if (const_iterator == tag_frequency_.end()) {
+    return std::numeric_limits<double>::min();
+  }
+
+  return const_iterator->second;
 }
 
 }  // namespace hmmsegmenter

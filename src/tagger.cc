@@ -7,16 +7,15 @@
 #include <iostream>
 #include <algorithm>
 
-#include "inc/utf8.h"
+
 
 namespace hmmsegmenter {
 
-bool Tagger::Segment(const HmmModel &model,
-                     const std::string &text,
-                     std::vector<std::string> *tokens) {
-  Utf8 utf(text);
+bool Tagger::Tag(const HmmModel &model,
+                 const std::string &text,
+                 std::vector<HmmModel::Tag> *tags) {
   std::vector<std::string> chars;
-  utf.GetUtf8Strings(&chars);
+  Utf8::GetUtf8Strings(text, &chars);
 
   const size_t chars_count = chars.size();
   double *probabilities[4];
@@ -28,10 +27,12 @@ bool Tagger::Segment(const HmmModel &model,
     nodes[i] = new int[chars_count];
   }
 
-  probabilities[0][0] = model.GetEmissionProbability(chars[0], HmmModel::B);
-  probabilities[1][0] = -3.14e+100;
-  probabilities[2][0] = -3.14e+100;
-  probabilities[3][0] = model.GetEmissionProbability(chars[0], HmmModel::S);
+  probabilities[0][0] = model.GetTagFrequency(HmmModel::B)
+                        + model.GetEmissionProbability(chars[0], HmmModel::B);
+  probabilities[1][0] = std::numeric_limits<double>::min();
+  probabilities[2][0] = std::numeric_limits<double>::min();
+  probabilities[3][0] = model.GetTagFrequency(HmmModel::S)
+                        + model.GetEmissionProbability(chars[0], HmmModel::S);
 
   nodes[0][0] = HmmModel::B;
   nodes[1][0] = HmmModel::E;
@@ -55,47 +56,19 @@ bool Tagger::Segment(const HmmModel &model,
     }
   }
 
-  std::vector<HmmModel::Tag> tags;
-  int last_pos = 0;
-  if (probabilities[1][chars_count - 1] > probabilities[3][chars_count - 1]) {
-    tags.push_back(HmmModel::E);
-    last_pos =  nodes[1][chars_count - 1];
+  int previous_tag = HmmModel::Z;
+  if (probabilities[1][chars_count - 1] >= probabilities[3][chars_count - 1]) {
+    tags->push_back(HmmModel::E);
+    previous_tag =  nodes[1][chars_count - 1];
   } else {
-    tags.push_back(HmmModel::S);
-    last_pos = nodes[3][chars_count - 1];
+    tags->push_back(HmmModel::S);
+    previous_tag = nodes[3][chars_count - 1];
   }
   for (size_t i = chars_count - 2; i >= 0; --i) {
-    tags.push_back((HmmModel::Tag) last_pos);
-    if (i == 0) {
-      break;
-    }
-    last_pos = (HmmModel::Tag) nodes[last_pos][i];
+    tags->push_back((HmmModel::Tag) previous_tag);
+    previous_tag = (HmmModel::Tag) nodes[previous_tag][i];
   }
-  std::reverse(tags.begin(), tags.end());
-
-  for (int i = 0; i < chars_count; ++i) {
-    std::cout << chars[i];
-    if (tags[i] == HmmModel::E || tags[i] == HmmModel::S) {
-      std::cout << " ";
-    }
-  }
-  std::cout << std::endl;
-
-  //for (int i = 0; i < 4; ++i) {
-  //  for (int j = 0; j < chars_count; ++j) {
-  //    std::cout << probabilities[i][j] << "\t";
-  //  }
-  //  std::cout << std::endl;
-  //}
-  //std::cout << std::endl;
-  //
-  //for (int i = 0; i < 4; ++i) {
-  //  for (int j = 0; j < chars_count; ++j) {
-  //    std::cout << nodes[i][j] << "\t";
-  //  }
-  //  std::cout << std::endl;
-  //}
-  //std::cout << std::endl;
+  std::reverse(tags->begin(), tags->end());
 
   for (int i = 0; i < 4; ++i) {
     delete [] probabilities[i];

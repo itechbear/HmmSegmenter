@@ -51,7 +51,10 @@ class HmmModel {
 
   double GetTransferProbability(const Tag previous, const Tag current) const;
 
-  double GetEmissionProbability(const std::string &character, const Tag tag) const;
+  double GetEmissionProbability(const std::string &character,
+                                const Tag tag) const;
+
+  double GetTagFrequency(const Tag tag) const;
 
   void Clear();
 
@@ -59,8 +62,9 @@ class HmmModel {
   std::unordered_map<uint8_t, std::unordered_map<uint8_t, double> > transfer_matrix_;
   std::unordered_map<std::string, std::unordered_map<uint8_t, double> > emission_matrix_;
   std::unordered_map<uint8_t, std::unordered_map<std::string, uint32_t> > character_conditions_;
-  std::unordered_map<uint8_t, std::unordered_map<uint8_t, uint32_t>> tag_conditions_;
   std::unordered_map<std::string, uint32_t> characters_;
+  std::unordered_map<uint8_t, std::unordered_map<uint8_t, uint32_t>> tag_conditions_;
+  std::map<Tag, double> tag_frequency_;
   std::map<Tag, uint32_t> tags_;
   bool cleared_;
 };

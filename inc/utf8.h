@@ -12,18 +12,12 @@ namespace hmmsegmenter {
 
 class Utf8 {
  public:
-  explicit Utf8(const std::string &ascii);
-
-  ~Utf8();
-
   static uint8_t GetByteCount(uint8_t byte);
 
-  bool GetUtf8Strings(std::vector<std::string> *chars);
-
- private:
-  const std::string ascii_;
+  static bool GetUtf8Strings(const std::string &text,
+                             std::vector<std::string> *chars);
 };
 
 }  // namespace hmmsegmenter
 
-#endif //HMMSEGMENTER_UTF8_H_
+#endif // HMMSEGMENTER_UTF8_H_

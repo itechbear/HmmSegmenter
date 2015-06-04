@@ -16,8 +16,8 @@ int main(int argc, char **argv) {
 
   training.Train();
 
-  std::vector<std::string> tokens;
-  hmmsegmenter::Tagger::Segment(training.GetHmmModel(), FLAGS_text, &tokens);
+  std::vector<hmmsegmenter::HmmModel::Tag> tags;
+  hmmsegmenter::Tagger::Tag(training.GetHmmModel(), FLAGS_text, &tags);
 
   return 0;
 }
