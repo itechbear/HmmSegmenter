@@ -13,10 +13,11 @@ int main(int argc, char **argv) {
   google::InitGoogleLogging(*argv);
   google::ParseCommandLineFlags(&argc, &argv, false);
 
+  // Train a model.
   hmmsegmenter::Training training(FLAGS_training_file);
-
   training.Train();
 
+  // Tag input sequences using your model.
   std::vector<hmmsegmenter::Character> chars;
   hmmsegmenter::Tagger::Tag(training.GetHmmModel(), FLAGS_text, &chars);
 
