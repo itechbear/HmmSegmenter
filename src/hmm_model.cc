@@ -208,7 +208,7 @@ double HmmModel::GetTagFrequency(const Character::Tag tag) const {
   auto const_iterator = tag_frequency_.find(tag);
 
   if (const_iterator == tag_frequency_.end()) {
-    return -3.14e100;
+    return -3.14e+100;
   }
 
   return const_iterator->second;
