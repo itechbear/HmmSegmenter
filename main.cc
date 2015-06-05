@@ -5,6 +5,7 @@
 
 #include "inc/training.h"
 #include "inc/tagger.h"
+#include "inc/character.h"
 
 DEFINE_string(text, "", "");
 
@@ -16,8 +17,20 @@ int main(int argc, char **argv) {
 
   training.Train();
 
-  std::vector<hmmsegmenter::HmmModel::Tag> tags;
-  hmmsegmenter::Tagger::Tag(training.GetHmmModel(), FLAGS_text, &tags);
+  std::vector<hmmsegmenter::Character> chars;
+  hmmsegmenter::Tagger::Tag(training.GetHmmModel(), FLAGS_text, &chars);
+
+  for (size_t i = 0; i < chars.size(); ++i) {
+    std::cout << chars[i].GetChracter();
+    switch (chars[i].GetTag()) {
+      case hmmsegmenter::Character::E:
+      case hmmsegmenter::Character::S:
+        std::cout << " ";
+        break;
+      default:
+        break;
+    }
+  }
 
   return 0;
 }

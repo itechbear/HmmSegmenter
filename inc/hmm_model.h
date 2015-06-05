@@ -10,51 +10,34 @@
 #include <map>
 #include <string>
 
+#include "inc/character.h"
+
 namespace hmmsegmenter {
 
 class HmmModel {
  public:
-  enum Tag {
-    Z = -1, B, E, M, S
-  };
-
-  static inline char TagToChar(const Tag tag) {
-    switch (tag) {
-      case B:
-        return 'B';
-      case E:
-        return 'E';
-      case M:
-        return 'M';
-      case S:
-        return 'S';
-      default:
-        return 'Z';
-    }
-  }
-
   HmmModel();
 
   ~HmmModel();
 
   void AddCharacter(const std::string &character);
 
-  void AddTag(const Tag tag);
+  void AddTag(const Character::Tag tag);
 
-  void AddCharacterCondition(const Tag tag,
+  void AddCharacterCondition(const Character::Tag tag,
                              const std::string &character);
 
-  void AddTagCondition(const Tag previous,
-                       const Tag current);
+  void AddTagCondition(const Character::Tag previous,
+                       const Character::Tag current);
 
   void Calculate();
 
-  double GetTransferProbability(const Tag previous, const Tag current) const;
+  double GetTransferProbability(const Character::Tag previous, const Character::Tag current) const;
 
   double GetEmissionProbability(const std::string &character,
-                                const Tag tag) const;
+                                const Character::Tag tag) const;
 
-  double GetTagFrequency(const Tag tag) const;
+  double GetTagFrequency(const Character::Tag tag) const;
 
   void Clear();
 
@@ -64,8 +47,8 @@ class HmmModel {
   std::unordered_map<uint8_t, std::unordered_map<std::string, uint32_t> > character_conditions_;
   std::unordered_map<std::string, uint32_t> characters_;
   std::unordered_map<uint8_t, std::unordered_map<uint8_t, uint32_t>> tag_conditions_;
-  std::map<Tag, double> tag_frequency_;
-  std::map<Tag, uint32_t> tags_;
+  std::map<Character::Tag, double> tag_frequency_;
+  std::map<Character::Tag, uint32_t> tags_;
   bool cleared_;
 };
 

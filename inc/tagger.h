@@ -14,7 +14,7 @@ class Tagger {
  public:
   static bool Tag(const HmmModel &model,
                   const std::string &text,
-                  std::vector<HmmModel::Tag> *tokens);
+                  std::vector<Character> *chracters);
 };
 
 }  // namespace hmmsegmenter

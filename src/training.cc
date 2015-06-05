@@ -8,6 +8,7 @@
 
 #include "inc/string_util.h"
 #include "inc/utf8.h"
+#include "inc/character.h"
 
 DEFINE_string(training_file, "", "");
 
@@ -37,30 +38,30 @@ bool Training::Train() {
       Utf8::GetUtf8Strings(token, &characters);
       const size_t size = characters.size();
       if (size == 1) {
-        HmmModel::Tag current_tag = HmmModel::S;
+        Character::Tag current_tag = Character::S;
         hmm_model_.AddTag(current_tag);
         hmm_model_.AddCharacter(characters[0]);
-        hmm_model_.AddCharacterCondition(HmmModel::S, characters[0]);
+        hmm_model_.AddCharacterCondition(Character::S, characters[0]);
         if (last_tag != -1) {
-          hmm_model_.AddTagCondition((HmmModel::Tag) last_tag, current_tag);
+          hmm_model_.AddTagCondition((Character::Tag) last_tag, current_tag);
         }
         last_tag = current_tag;
       } else {
         const size_t count = characters.size();
         for (size_t i = 0; i < count; ++i) {
-          HmmModel::Tag current_tag;
+          Character::Tag current_tag;
           if (i == 0) {
-            current_tag = HmmModel::B;
+            current_tag = Character::B;
           } else if (i == count - 1) {
-            current_tag = HmmModel::E;
+            current_tag = Character::E;
           } else {
-            current_tag = HmmModel::M;
+            current_tag = Character::M;
           }
           hmm_model_.AddTag(current_tag);
           hmm_model_.AddCharacter(characters[i]);
           hmm_model_.AddCharacterCondition(current_tag, characters[i]);
           if (last_tag != -1) {
-            hmm_model_.AddTagCondition((HmmModel::Tag) last_tag, current_tag);
+            hmm_model_.AddTagCondition((Character::Tag) last_tag, current_tag);
           }
           last_tag = current_tag;
         }

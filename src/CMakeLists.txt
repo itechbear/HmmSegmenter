@@ -10,7 +10,7 @@ add_library(
   training.cc
   ../inc/hmm_model.h
   hmm_model.cc
-  ../inc/tagger.h tagger.cc)
+  ../inc/tagger.h tagger.cc ../inc/character.h character.cc)
 
 target_link_libraries(
   hmmsegmenter
